@@ -6,7 +6,17 @@ module Drawing
   @@left_leg = "/"
   @@right_leg = "\\"
 
-  @@parts_array = [@@head, @@left_arm, @@body, @@right_arm]
+  @@parts_array = [@@head, @@left_arm, @@body, @@right_arm,@@left_leg,@@right_leg]
+
+  def redraw
+  @@head = "O"
+  @@left_arm = "/"
+  @@body = "|"
+  @@right_arm = "\\"
+  @@left_leg = "/"
+  @@right_leg = "\\"
+  @@parts_array = [@@head, @@left_arm, @@body, @@right_arm,@@left_leg,@@right_leg]
+  end
 end
 
 class Board
@@ -17,7 +27,7 @@ class Board
     #Draws the hangman from the body parts in Drawing module
     puts " " + @@parts_array[0] + " "
     puts @@parts_array[1] + @@parts_array[2] + @@parts_array[3]
-    puts @@left_leg + " " + @@right_leg
+    puts @@parts_array[4] + " " + @@parts_array[5]
   end
 end
 
@@ -28,7 +38,7 @@ class Items < Board
   def start
     draw_hangman()
     @random_word = select_random_word()
-    puts @random_word
+    #puts @random_word
     start_guess
   end
 
@@ -42,20 +52,49 @@ class Items < Board
     @random_word = @random_word.chomp
     @array_char = @random_word.split("")
     (@array_char.length()).times do
-      @@array_guess.push("_")
+    @@array_guess.push("_")
     end
     @@array_guess.each { |letter| print letter }
   end
 end
 
 class Game < Items
+
+
   def initialize
+    @counter = -1
+    game_steps
+  end
+
+  def game_steps
     start()
+    game_loop
+    play_again
+  end
+
+  def play_again
+    puts "","The word was #{@random_word}!"
+    puts "Do you want to play again? Y/N"
+    user_answer = gets.chomp.downcase
+    user_answer = user_answer[0]
+    @array_char = []
+    @@array_guess = []
+    redraw
+    @counter = -1
+    if user_answer == "y"
+      game_steps
+    else
+      puts "Thanks for playing!"
+    end
+  end
+
+  def game_loop
     #Loops game until the hangman dissapears
     while @@parts_array.include?("/") || @@parts_array.include?("O") || @@parts_array.include?("\\")
-      turn
+      turn()
       #If the user guesses all the letters the loop breaks
       if @@array_guess.include?("_") == false
+        puts "", "You win!!!"
         break
       end
     end
@@ -77,8 +116,9 @@ class Game < Items
         end
       end
     else
-      #Removes part from the hangman (needs fixing)
-      @@parts_array[rand(@@parts_array.length - 1)] = " " if @@parts_array[rand(@@parts_array.length - 1)] != " "
+      @counter += 1
+      #Removes part from the hangman
+      @@parts_array[@counter] = " "
     end
     #draws the updated hangman
     draw_hangman
