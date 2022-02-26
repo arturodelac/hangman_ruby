@@ -1,3 +1,5 @@
+require 'json'
+
 module Drawing
   @@head = "O"
   @@left_arm = "/"
@@ -56,23 +58,36 @@ class Items < Board
     end
     @@array_guess.each { |letter| print letter }
   end
+
+  def start_guess_with_save
+    @@array_guess.each { |letter| print letter }
+  end
 end
 
 class Game < Items
 
 
   def initialize
+    @exit=0
     @counter = -1
     game_steps
   end
 
   def game_steps
+    if load_save == "n"
     start()
+    else
+    draw_hangman()
+    start_guess_with_save
+    end
     game_loop
+    if @exit ==0
     play_again
+    end
   end
 
   def play_again
+    
     puts "","The word was #{@random_word}!"
     puts "Do you want to play again? Y/N"
     user_answer = gets.chomp.downcase
@@ -90,12 +105,17 @@ class Game < Items
 
   def game_loop
     #Loops game until the hangman dissapears
-    while @@parts_array.include?("/") || @@parts_array.include?("O") || @@parts_array.include?("\\")
+    while @@parts_array.include?("/") || @@parts_array.include?("O") || @@parts_array.include?("\\") 
       turn()
       #If the user guesses all the letters the loop breaks
       if @@array_guess.include?("_") == false
-        puts "", "You win!!!"
+        puts "You win!!!"
+        @exit=0
         break
+      elsif @exit==1
+        break
+      else 
+        @exit = 0
       end
     end
   end
@@ -107,6 +127,16 @@ class Game < Items
     if @user_input.length > 1
       @user_input = @user_input[0]
     end
+    #checks for input to save
+
+    if @user_input == "9"
+      to_json
+      puts  "Saved. Thanks for playing!"
+      @exit = 1
+    else 
+      @exit=0
+    
+
 
     #Checks if the letter is included in the random word and then adds it to the guess array if true
     if @array_char.include?(@user_input)
@@ -124,6 +154,38 @@ class Game < Items
     draw_hangman
     #Draws the guess
     @@array_guess.each { |letter| print letter }
+    #Asks to save 
+    puts "","Enter guess or 9 to save"
+  end
+  end
+
+  def to_json
+   File.write("save.json", (JSON.dump ({
+      :array_char => @array_char,
+      :array_guess => @@array_guess,
+      :parts_array => @@parts_array,
+      :random_word => @random_word,
+      :counter => @counter
+   })))
+  end
+
+  def from_json
+    data =JSON.load File.read("save.json") 
+    @array_char = data["array_char"]
+    @@array_guess = data["array_guess"]
+    @@parts_array = data["parts_array"]
+    @random_word = data["random_word"]
+    @counter = data["counter"]
+  end
+
+  def load_save
+    puts "Do you want to load a save?"
+    user_answer =gets.chomp
+    user_answer = user_answer[0].downcase
+    if user_answer == "y"
+      from_json
+    end
+    user_answer
   end
 end
 
